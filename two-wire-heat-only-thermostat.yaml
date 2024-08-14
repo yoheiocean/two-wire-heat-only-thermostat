@@ -87,23 +87,23 @@ sensor:
     update_interval: 10s
 
 i2c:
-  sda: GPIO5
-  scl: GPIO6
+  sda: GPIO8
+  scl: GPIO9
   scan: true
 
 display:
   - platform: ssd1306_i2c
-    model: "SSD1306 128x64"
-    reset_pin: GPIO7
+    model: "SSD1306 128x32"
+    reset_pin: GPIO3
     address: 0x3C
     lambda: |-
-      it.printf(0, 0, id(display_font), "Temp: %.1f°C", id(room_temp).state);
-      it.printf(0, 20, id(display_font), "Target: %.1f°C", id(heater_thermostat).current_temperature);
+      it.printf(4, 4, id(display_font), "%.1f°C", id(room_temp).state);
+      it.printf(48, 4, id(display_font), "%.1f°C", id(heater_thermostat).current_temperature);
 
 font:
   - file: "fonts/pixelmix.ttf"
     id: display_font
-    size: 16
+    size: 24
 
 climate:
   - platform: thermostat
@@ -133,7 +133,7 @@ climate:
 
 switch:
   - platform: gpio
-    pin: GPIO43
+    pin: GPIO6
     id: heater_relay
     restore_mode: ALWAYS_OFF
 
@@ -153,7 +153,7 @@ binary_sensor:
               }
 
   - platform: gpio
-    pin: GPIO41
+    pin: GPIO38
     name: "Increase Temp Button"
     on_press:
       then:
@@ -163,7 +163,7 @@ binary_sensor:
               return id(heater_thermostat).target_temperature + 0.5;
 
   - platform: gpio
-    pin: GPIO40
+    pin: GPIO45
     name: "Decrease Temp Button"
     on_press:
       then:
@@ -190,5 +190,3 @@ binary_sensor:
                 id: onboard_status_led
                 blue: 100%  # Blue when heater is off
                 brightness: 40%
-
-

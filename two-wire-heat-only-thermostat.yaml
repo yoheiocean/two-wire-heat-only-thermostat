@@ -1,12 +1,19 @@
 esphome:
   name: two-wire-heat-only-thermostat
   friendly_name: Two-Wire Heat Only Thermostat
+  platformio_options:
+    board_build.flash_mode: dio
 
 esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
-
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_AUDIO_BOARD_CUSTOM: "y"
+      
 psram:
   mode: quad # Please change this to quad for N8R2 and octal for N16R8
   speed: 80MHz

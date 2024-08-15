@@ -77,6 +77,7 @@ light:
           max_brightness: 40%
 
 sensor:
+# Include a temp sensor on the board.
   - platform: dht
     pin: GPIO4
     temperature:
@@ -86,6 +87,14 @@ sensor:
       name: "Room Humidity"
     model: DHT11
     update_interval: 10s
+
+# Use the existing temp sensor
+  - platform: homeassistant
+    entity_id: sensor.test_node_home_temperature
+    id: living_room_temp
+    name: "Living Room Temp"
+    filters:
+      - lambda: return (x - 32) / 1.8;
 
 i2c:
   sda: GPIO8
@@ -98,9 +107,15 @@ display:
     reset_pin: GPIO3
     address: 0x3C
     lambda: |-
+      // When using the onboard sensor
       float room_temp_f = (id(room_temp).state * 9.0 / 5.0) + 32.0;
+
+      // When using another sensor on Home Assistant
+      float living_room_temp_f = (id(living_room_temp).state * 9.0 / 5.0) + 32.0;
       float target_temp_f = (id(heater_thermostat).target_temperature * 9.0 / 5.0) + 32.0;
-      it.printf(2, 12, id(display_font), "%.0f", room_temp_f);
+
+      // Change the variable to room_temp_f when using the onboard sensor
+      it.printf(2, 12, id(display_font), "%.1f", living_room_temp_f);
       it.printf(58, 12, id(display_font), "%.1f", target_temp_f);
       it.printf(105, 4, id(small_font), "%s", id(thermostat_mode_text).state.c_str());
       it.printf(105, 20, id(small_font), "%s", id(heater_status_text).state.c_str());
@@ -118,7 +133,8 @@ climate:
     name: "Heater Thermostat"
     id: heater_thermostat
     # icon: 'find some icon here'
-    sensor: room_temp
+    # sensor: room_temp
+    sensor: living_room_temp
     min_idle_time: 1s
     min_heating_off_time: 300s
     min_heating_run_time: 300s

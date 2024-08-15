@@ -115,15 +115,18 @@ display:
       float target_temp_f = (id(heater_thermostat).target_temperature * 9.0 / 5.0) + 32.0;
 
       // Change the variable to room_temp_f when using the onboard sensor
-      it.printf(2, 12, id(display_font), "%.1f", living_room_temp_f);
-      it.printf(58, 12, id(display_font), "%.1f", target_temp_f);
+      it.printf(2, 4, id(medium_font), "%.1f", living_room_temp_f);
+      it.printf(44, 8, id(large_font), "%.1f", target_temp_f);
       it.printf(105, 4, id(small_font), "%s", id(thermostat_mode_text).state.c_str());
       it.printf(105, 20, id(small_font), "%s", id(heater_status_text).state.c_str());
 
 font:
-  - file: "fonts/pixelmix.ttf"
-    id: display_font
-    size: 15
+  - file: "fonts/CaviarDreams.ttf"
+    id: large_font
+    size: 24
+  - file: "fonts/CaviarDreams.ttf"
+    id: medium_font
+    size: 16
   - file: "fonts/pixelmix.ttf"
     id: small_font
     size: 8
@@ -135,7 +138,7 @@ climate:
     # icon: 'find some icon here'
     # sensor: room_temp
     sensor: living_room_temp
-    min_idle_time: 1s
+    min_idle_time: 10s
     min_heating_off_time: 300s
     min_heating_run_time: 300s
     heat_action:

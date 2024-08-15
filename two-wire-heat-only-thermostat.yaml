@@ -4,6 +4,14 @@ esphome:
   platformio_options:
     board_build.flash_mode: dio
 
+  on_boot:
+    - light.turn_on:
+        id: onboard_status_led
+        green: 0%
+        red: 0%
+        blue: 100%
+        brightness: 14%
+
 esp32:
   board: esp32-s3-devkitc-1
   framework:
@@ -25,17 +33,6 @@ logger:
 api:
   encryption:
     key: "3AqSc7uwnuGXoZZIzPSsW34qRO3tuqVzK8RTO2reNUc="
-  on_client_connected:
-    then:
-      - delay: 50ms
-      - light.turn_on:
-          id: onboard_status_led
-          blue: 100%
-          brightness: 40%
-  on_client_disconnected:
-    then:
-      - delay: 50ms
-      - light.turn_off: onboard_status_led
 
 ota:
   - platform: esphome
@@ -74,6 +71,10 @@ light:
     restore_mode: ALWAYS_ON
     effects:
       - pulse:
+      - pulse:
+          name: "Warning Pulse"
+          min_brightness: 14%
+          max_brightness: 40%
 
 sensor:
   - platform: dht
@@ -97,13 +98,20 @@ display:
     reset_pin: GPIO3
     address: 0x3C
     lambda: |-
-      it.printf(4, 4, id(display_font), "%.1f°C", id(room_temp).state);
-      it.printf(48, 4, id(display_font), "%.1f°C", id(heater_thermostat).current_temperature);
+      float room_temp_f = (id(room_temp).state * 9.0 / 5.0) + 32.0;
+      float target_temp_f = (id(heater_thermostat).target_temperature * 9.0 / 5.0) + 32.0;
+      it.printf(2, 12, id(display_font), "%.0f", room_temp_f);
+      it.printf(58, 12, id(display_font), "%.1f", target_temp_f);
+      it.printf(105, 4, id(small_font), "%s", id(thermostat_mode_text).state.c_str());
+      it.printf(105, 20, id(small_font), "%s", id(heater_status_text).state.c_str());
 
 font:
   - file: "fonts/pixelmix.ttf"
     id: display_font
-    size: 24
+    size: 15
+  - file: "fonts/pixelmix.ttf"
+    id: small_font
+    size: 8
 
 climate:
   - platform: thermostat
@@ -111,7 +119,7 @@ climate:
     id: heater_thermostat
     # icon: 'find some icon here'
     sensor: room_temp
-    min_idle_time: 30s
+    min_idle_time: 1s
     min_heating_off_time: 300s
     min_heating_run_time: 300s
     heat_action:
@@ -134,13 +142,24 @@ climate:
 switch:
   - platform: gpio
     pin: GPIO6
+    name: "Heater Relay"
+    internal: True
     id: heater_relay
     restore_mode: ALWAYS_OFF
 
+######
+# BINARY SENSORS
+######
+
 binary_sensor:
+  # Thermostat Power Button (Mode: Heat or Off)
   - platform: gpio
-    pin: GPIO42
-    name: "Heater On/Off Button"
+    pin: 
+      number: GPIO42
+      mode: INPUT_PULLUP
+    name: "Thermostat On Off Button"
+    internal: True
+    id: thermostat_button
     on_press:
       then:
         - climate.control:
@@ -151,10 +170,52 @@ binary_sensor:
               } else {
                 return climate::CLIMATE_MODE_OFF;
               }
+  
+  - platform: template
+    name: "Thermostat Status"
+    id: thermostat_status
+    lambda: |-
+      return id(heater_thermostat).mode == climate::CLIMATE_MODE_HEAT;
+    on_state:
+      - light.turn_off: onboard_status_led
+      - if:
+          condition:
+            binary_sensor.is_on: thermostat_status
+          then:
+            - if:
+                condition:
+                  binary_sensor.is_on: heater_status
+                then:
+                  - light.turn_on:
+                      id: onboard_status_led
+                      red: 55%
+                      green: 30%  
+                      blue: 15%
+                      brightness: 80% # Bright orange when heater is on
+                else:
+                  - light.turn_on:
+                      id: onboard_status_led
+                      red: 50%
+                      green: 50% # Yellow on stand by
+                      blue: 0%  
+                      brightness: 14%
+                      effect: "Warning Pulse"
+          else:
+            - switch.turn_off: heater_relay
+            - light.turn_on:
+                id: onboard_status_led
+                red: 50%
+                green: 0% 
+                blue: 100% # Blue when thermostat (and the heater) is off 
+                brightness: 14%
 
+  # Increase Target Temp
   - platform: gpio
-    pin: GPIO38
+    pin: 
+      number: GPIO38
+      mode: INPUT_PULLUP
     name: "Increase Temp Button"
+    internal: True
     on_press:
       then:
         - climate.control:
@@ -162,9 +223,13 @@ binary_sensor:
             target_temperature: !lambda |-
               return id(heater_thermostat).target_temperature + 0.5;
 
+  # Decrease Target Temp
   - platform: gpio
-    pin: GPIO45
+    pin: 
+      number: GPIO45
+      mode: INPUT_PULLUP
     name: "Decrease Temp Button"
+    internal: True
     on_press:
       then:
         - climate.control:
@@ -172,21 +237,82 @@ binary_sensor:
             target_temperature: !lambda |-
               return id(heater_thermostat).target_temperature - 0.5;
   
+  # Heater (Relay) On or Off
   - platform: template
     id: heater_status
     name: "Heater Status"
     lambda: |-
-      return id(heater_thermostat).current_temperature <= id(heater_thermostat).target_temperature && id(heater_thermostat).mode == climate::CLIMATE_MODE_HEAT;
+      return id(heater_relay).state;
     on_state:
+      - light.turn_off: onboard_status_led
       - if:
           condition:
-            binary_sensor.is_on: heater_status
+            binary_sensor.is_on: thermostat_status
           then:
-            - light.turn_on:
-                id: onboard_status_led
-                green: 100%  # Green when heater is on
+            - if:
+                condition:
+                  binary_sensor.is_on: heater_status
+                then:
+                  - light.turn_on:
+                      id: onboard_status_led
+                      red: 55%
+                      green: 30%  
+                      blue: 15%
+                      brightness: 80% # Bright orange when heater is on
+                else:
+                  - light.turn_on:
+                      id: onboard_status_led
+                      red: 50%
+                      green: 50% # Yellow on stand by
+                      blue: 0%  
+                      brightness: 14%
+                      effect: "Warning Pulse"
           else:
             - light.turn_on:
                 id: onboard_status_led
-                blue: 100%  # Blue when heater is off
-                brightness: 40%
+                red: 50%
+                green: 0% 
+                blue: 100% # Blue when thermostat (and the heater) is off 
+                brightness: 14%
+
+  # Text sensor to Binary sensor
+  - platform: template
+    id: thermostat_mode_on
+    internal: True
+    name: "Thermostat Mode On"
+    lambda: |-
+      return id(thermostat_mode_text).state == "HEAT";
+
+
+######
+# TEXT SENSORS
+######
+
+text_sensor:
+  - platform: template
+    id: thermostat_mode_text
+    name: "Thermostat Mode Text"
+    internal: True
+    update_interval: 1s
+    lambda: |-
+      if (id(heater_thermostat).mode == climate::CLIMATE_MODE_OFF) {
+        return {"OFF"};
+      } else {
+        return {"HEAT"};
+      }
+
+  - platform: template
+    id: heater_status_text
+    name: "Heater Status Text"
+    internal: True
+    update_interval: 1s
+    lambda: |-
+      if (id(heater_thermostat).mode == climate::CLIMATE_MODE_HEAT) {
+        if (id(heater_status).state) {
+          return {"ON"};
+        } else {
+          return {"OFF"};
+        }
+      } else {
+        return {""};
+      }

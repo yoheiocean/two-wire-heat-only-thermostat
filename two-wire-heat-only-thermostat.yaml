@@ -114,8 +114,8 @@ display:
       float living_room_temp_f = (id(living_room_temp).state * 9.0 / 5.0) + 32.0;
       float target_temp_f = (id(heater_thermostat).target_temperature * 9.0 / 5.0) + 32.0;
 
-      // Change the variable to room_temp_f when using the onboard sensor
-      it.printf(2, 4, id(medium_font), "%.1f", living_room_temp_f);
+      // Change the variable to room_temp_f when using the onboard sensor, living_room_temp_f for another sensor
+      it.printf(2, 4, id(medium_font), "%.1f", room_temp_f);
       it.printf(44, 8, id(large_font), "%.1f", target_temp_f);
       it.printf(105, 4, id(small_font), "%s", id(thermostat_mode_text).state.c_str());
       it.printf(105, 20, id(small_font), "%s", id(heater_status_text).state.c_str());
@@ -136,21 +136,23 @@ climate:
     name: "Heater Thermostat"
     id: heater_thermostat
     # icon: 'find some icon here'
-    # sensor: room_temp
-    sensor: living_room_temp
+    sensor: room_temp
+    # sensor: living_room_temp
     min_idle_time: 10s
-    min_heating_off_time: 300s
-    min_heating_run_time: 300s
+    min_heating_off_time: 120s
+    min_heating_run_time: 120s
     heat_action:
       - switch.turn_on: heater_relay
     idle_action:
       - switch.turn_off: heater_relay
-    default_preset: Home
+    default_preset: Comfort
     preset:
-      - name: Home
-        default_target_temperature_low: 23.0
+      - name: Comfort
+        default_target_temperature_low: 22.78
+      - name: Eco
+        default_target_temperature_low: 21.11
       - name: Sleep
-        default_target_temperature_low: 16.0
+        default_target_temperature_low: 15.55
     visual:
       min_temperature: 10
       max_temperature: 30

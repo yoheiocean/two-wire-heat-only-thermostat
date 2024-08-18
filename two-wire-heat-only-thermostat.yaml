@@ -157,7 +157,7 @@ climate:
       min_temperature: 10
       max_temperature: 30
       temperature_step: 
-        target_temperature: 0.5
+        target_temperature: 0.278
         current_temperature: 0.1
 
 switch:

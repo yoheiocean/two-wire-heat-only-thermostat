@@ -157,7 +157,7 @@ climate:
       min_temperature: 10
       max_temperature: 30
       temperature_step: 
-        target_temperature: 0.278
+        target_temperature: 0.5
         current_temperature: 0.1
 
 switch:
@@ -242,7 +242,7 @@ binary_sensor:
         - climate.control:
             id: heater_thermostat
             target_temperature: !lambda |-
-              return id(heater_thermostat).target_temperature + 0.5;
+              return id(heater_thermostat).target_temperature + 0.278;
 
   # Decrease Target Temp
   - platform: gpio
@@ -256,7 +256,7 @@ binary_sensor:
         - climate.control:
             id: heater_thermostat
             target_temperature: !lambda |-
-              return id(heater_thermostat).target_temperature - 0.5;
+              return id(heater_thermostat).target_temperature - 0.278;
   
   # Heater (Relay) On or Off
   - platform: template

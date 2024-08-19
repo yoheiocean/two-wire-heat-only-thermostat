@@ -46,7 +46,7 @@ To connect the ESP32 smart thermostat to your existing Williams heater:
 2. **Disconnect Old Thermostat**: Remove the two wires connected to the old thermostat.
 3. **Connect Wires**: Connect these two wires to the **NO (Normally Open) terminals** of the 5V relay. The relay will act as a switch to control the heater.
 
-![alt text](images/williams-thermostat-inside.JPG)
+![alt text](images/williams-thermostat-inside.png)
 
 ![alt text](images/wiring.png)
 

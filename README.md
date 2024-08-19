@@ -48,4 +48,6 @@ To connect the ESP32 smart thermostat to your existing Williams heater:
 
 ![alt text](images/williams-thermostat-inside.JPG)
 
+![alt text](images/wiring.png)
+
 ![alt text](images/prototype.JPG)

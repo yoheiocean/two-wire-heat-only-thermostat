@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project aims to replace an old, two-wire heat-only thermostat with a modern smart thermostat using an ESP32. The smart thermostat will feature a user interface on an OLED display, temperature control through physical buttons, and integration with Home Assistant for smart home automation.
+This project aims to replace an old, two-wire heat-only thermostat with a modern smart thermostat using ESPHome on an ESP32. The smart thermostat will feature a user interface on an OLED display, temperature control through physical buttons, and integration with Home Assistant for smart home automation.
 
 ![alt text](images/home-assistant-dashboard.png)
 

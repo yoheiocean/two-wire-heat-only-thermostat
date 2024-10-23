@@ -148,9 +148,9 @@ climate:
     default_preset: Comfort
     preset:
       - name: Comfort
-        default_target_temperature_low: 22.78
-      - name: Eco
         default_target_temperature_low: 21.11
+      - name: Eco
+        default_target_temperature_low: 18.89
       - name: Sleep
         default_target_temperature_low: 15.55
     visual:
